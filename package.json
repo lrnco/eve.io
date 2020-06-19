@@ -15,6 +15,7 @@
     "@turf/turf": "^5.1.6",
     "@types/mapbox-gl": "^1.10.4",
     "ant-design-vue": "^1.6.2",
+    "axios": "^0.19.2",
     "core-js": "^3.6.5",
     "geojson": "^0.5.0",
     "geonames.js": "^2.3.0",

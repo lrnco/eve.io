@@ -43,14 +43,14 @@ export function mapData(
 
   function getHeight(value: number) {
     const percentage = Math.floor(getPercentage(value));
-    const height = percentage * 100;
+    const height = percentage * 50;
 
     return height;
   }
 
   const poly = collection.features.map((point) =>
-    circle(point, 0.1, {
-      steps: 10,
+    circle(point, 0.5, {
+      steps: 24,
       properties: {
         color: getColor(Number(point.properties[property])),
         height: getHeight(Number(point.properties[property])),

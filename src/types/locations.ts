@@ -1,12 +1,15 @@
 import { GeonameBase } from "./geonames";
 
-export interface LocationsEntity extends GeonameBase {
+export interface LocationEntity extends GeonameBase {
   id: number;
+  temperature: number | null;
+  humidity: number | null;
+  windSpeed: number | null;
 }
 
 export interface LocationsState {
   loading: boolean;
-  searchResults: LocationsEntity[];
-  selected: LocationsEntity;
-  points: LocationsEntity[];
+  searchResults: LocationEntity[];
+  selected: LocationEntity;
+  points: LocationEntity[];
 }

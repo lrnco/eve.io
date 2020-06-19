@@ -7,10 +7,6 @@
         center: [0, 35],
         zoom: 2,
       }"
-      :geolocate-control="{
-        show: true,
-        position: 'bottom-right',
-      }"
       @map-init="mapInitialized"
     />
   </div>
@@ -21,7 +17,7 @@ import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import mapboxgl from "mapbox-gl";
 import Mapbox from "mapbox-gl-vue";
 import { center, point, featureCollection, bbox } from "@turf/turf";
-import { LocationsEntity } from "../../types/locations";
+import { LocationEntity } from "../../types/locations";
 import { Feature, Point, FeatureCollection } from "geojson";
 import { mapData } from "../../utils/mapCollectionData";
 // import pin from "../../static/pin.png";
@@ -34,7 +30,9 @@ import { mapData } from "../../utils/mapCollectionData";
 export default class Map extends Vue {
   private accessToken: string = process.env.VUE_APP_MAPBOX_ACCESS_TOKEN;
   private map: mapboxgl.Map | null = null;
-  @Prop() private points!: LocationsEntity[];
+  private collection: any;
+  @Prop() private points!: LocationEntity[];
+  @Prop() private selected!: string;
 
   mapInitialized(map: mapboxgl.Map) {
     this.map = map;
@@ -53,8 +51,8 @@ export default class Map extends Vue {
           center: { lng, lat },
           zoom: 12,
           essential: true,
-          pitch: Number(40),
-          bearing: Number(-40),
+          pitch: Number(30),
+          bearing: Number(-30),
         });
     }
   }
@@ -108,7 +106,9 @@ export default class Map extends Vue {
       const extent = bbox(collection);
       // Type enforcemnent
       this.map.fitBounds([extent[0], extent[1], extent[2], extent[3]], {
-        padding: 200,
+        padding: 150,
+        pitch: Number(30),
+        bearing: Number(-30),
       });
     }
   }
@@ -153,11 +153,12 @@ export default class Map extends Vue {
   }
 
   @Watch("points")
-  onPointsChanged(value: LocationsEntity[] | null) {
+  onPointsChanged(value: LocationEntity[] | null) {
     if (value) {
       const collection: any = featureCollection(
         value.map((item) => point([Number(item.lng), Number(item.lat)], item))
       );
+      this.collection = collection;
       const centroid = center(collection);
 
       if (centroid) this.fly(centroid.geometry);
@@ -166,6 +167,15 @@ export default class Map extends Vue {
         this.extrudeData(collection);
         this.fitMap(collection);
       }
+    }
+  }
+
+  @Watch("selected")
+  onDataSelectChange(value: string | null) {
+    if (value && this.collection) {
+      this.addPoints(this.collection, value);
+      this.extrudeData(this.collection, value);
+      this.fitMap(this.collection);
     }
   }
 }

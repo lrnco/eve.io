@@ -1,10 +1,12 @@
-import { search, findhNearBy } from "@/services/Geonames";
+import { search, findNearBy } from "@/services/Geonames";
+import { getMultipointWeather } from "@/services/OpenWeatherMap";
 import { Module } from "vuex";
-import { LocationsEntity } from "@/types/locations";
+import { LocationEntity } from "@/types/locations";
 
 const locationsModule: Module<any, any> = {
   namespaced: true,
   state: {
+    data: "population",
     loading: false,
     searchResults: [],
     selected: null,
@@ -17,12 +19,20 @@ const locationsModule: Module<any, any> = {
     setSearchResults(state, result) {
       state.searchResults = result;
     },
-    setNearBy(state, result) {
+    mergePoints(state, result) {
       state.points = [...state.points, ...result];
+      state.data = "population";
+    },
+    setPoints(state, result) {
+      state.points = result;
     },
     setSelected(state, selected) {
       state.selected = selected;
       state.points = [selected];
+      state.data = "population";
+    },
+    setData(state, selected) {
+      state.data = selected;
     },
   },
   actions: {
@@ -31,15 +41,24 @@ const locationsModule: Module<any, any> = {
       commit("setSearchResults", await search(query));
       commit("setLoading");
     },
-    async searchCitiesNearBy({ commit }, { id, lat, lng }: LocationsEntity) {
-      console.log("searchCitiesNearBy");
-      commit("setLoading");
-      commit("setNearBy", await findhNearBy(id, lat, lng));
-      commit("setLoading");
-    },
-    async selectLocation({ commit, dispatch }, selected: LocationsEntity) {
+    async selectLocation({ commit, dispatch }, selected: LocationEntity) {
       commit("setSelected", selected);
       dispatch("searchCitiesNearBy", selected);
+    },
+    async selectData({ commit }, selected: string) {
+      commit("setData", selected);
+    },
+    async searchCitiesNearBy(
+      { commit, dispatch },
+      { id, lat, lng }: LocationEntity
+    ) {
+      commit("setLoading");
+      commit("mergePoints", await findNearBy(id, lat, lng));
+      commit("setLoading");
+      dispatch("getCitiesWeather");
+    },
+    async getCitiesWeather({ commit, state }) {
+      commit("setPoints", await getMultipointWeather(state.points));
     },
   },
 };

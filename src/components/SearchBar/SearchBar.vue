@@ -31,9 +31,12 @@
               "
             >
               <div class="search-detail">
-                <p>{{ item.name }}</p>
-                <span v-if="item.adminName1">{{ item.adminName1 }}, </span>
-                <span v-if="item.countryName"> {{ item.countryName }} </span>
+                <a-icon type="environment" />
+                <div class="search-detail-text">
+                  <p>{{ item.name }}</p>
+                  <span v-if="item.adminName1">{{ item.adminName1 }}, </span>
+                  <span v-if="item.countryName"> {{ item.countryName }} </span>
+                </div>
               </div>
             </a-select-option>
           </template>
@@ -45,7 +48,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
-import { LocationsEntity } from "../../types/locations";
+import { LocationEntity } from "../../types/locations";
 import { Icon, Input, AutoComplete, FormModel, Select } from "ant-design-vue";
 import { FormItem } from "ant-design-vue/types/form/form-item";
 
@@ -81,7 +84,7 @@ export default class SearchBar extends Vue {
   };
 
   @Prop() private loading!: boolean;
-  @Prop() private searchResults!: LocationsEntity[];
+  @Prop() private searchResults!: LocationEntity[];
   get locations() {
     return this.form.search &&
       this.form.search.length > 2 &&

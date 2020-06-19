@@ -6,21 +6,28 @@
       @search="onSearch"
       @select="onSelect"
     />
-    <Map :points="locations.points" />
+    <DataTabs
+      :selected="locations.data"
+      :points="locations.points"
+      @select="onDataSelect"
+    />
+    <Map :selected="locations.data" :points="locations.points" />
   </div>
 </template>
 
 <script lang="ts">
 const namespace = "locations";
-import { Component, Vue } from "vue-property-decorator";
-import { LocationsState, LocationsEntity } from "../../types/locations";
+import { Component, Vue, Watch } from "vue-property-decorator";
+import { LocationsState, LocationEntity } from "../../types/locations";
 import { State, Action } from "vuex-class";
 import SearchBar from "@/components/SearchBar";
+import DataTabs from "@/components/DataTabs";
 import Map from "@/components/Map";
 
 @Component({
   components: {
     SearchBar,
+    DataTabs,
     Map,
   },
 })
@@ -28,13 +35,18 @@ export default class Search extends Vue {
   @State("locations") private locations!: LocationsState;
   @Action("searchCities", { namespace }) searchCities: any;
   @Action("selectLocation", { namespace }) selectLocation: any;
+  @Action("selectData", { namespace }) selectData: any;
 
   onSearch(searchText: string) {
     this.searchCities(searchText);
   }
 
-  onSelect(selected: LocationsEntity) {
+  onSelect(selected: LocationEntity) {
     this.selectLocation(selected);
+  }
+
+  onDataSelect(selected: string) {
+    this.selectData(selected);
   }
 }
 </script>

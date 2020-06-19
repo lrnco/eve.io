@@ -1,5 +1,5 @@
 import Geonames from "geonames.js";
-import { LocationsEntity } from "@/types/locations";
+import { LocationEntity } from "@/types/locations";
 import {
   GeonameSearchResult,
   GeonameSearchError,
@@ -22,13 +22,16 @@ function mapItem(item: GeonameEntity) {
     lng: item.lng,
     population: item.population,
     fcode: item.fcode,
+    temperature: null,
+    humidity: null,
+    windSpeed: null,
   };
 }
 
 export async function search(
   query: string,
   maxRows = 3
-): Promise<LocationsEntity[]> {
+): Promise<LocationEntity[]> {
   const response:
     | GeonameSearchResult
     | GeonameSearchError = await geonames.search({
@@ -44,13 +47,13 @@ export async function search(
   return response.geonames.map(mapItem);
 }
 
-export async function findhNearBy(
+export async function findNearBy(
   id: number,
   lat: string,
   lng: string,
   radius = 300,
   maxRows = 4
-): Promise<LocationsEntity[]> {
+): Promise<LocationEntity[]> {
   const response:
     | GeonameSearchResult
     | GeonameSearchError = await geonames.findNearbyPlaceName({
@@ -67,7 +70,7 @@ export async function findhNearBy(
   }
 
   return response.geonames.reduce(
-    (filtered: LocationsEntity[], item: GeonameEntity) => {
+    (filtered: LocationEntity[], item: GeonameEntity) => {
       if (item.geonameId !== id) filtered.push(mapItem(item));
       return filtered;
     },
