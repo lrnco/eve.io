@@ -20,9 +20,11 @@
 import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 import mapboxgl from "mapbox-gl";
 import Mapbox from "mapbox-gl-vue";
+import { center, point, featureCollection, bbox } from "@turf/turf";
 import { LocationsEntity } from "../../types/locations";
-import { toGeoFeatureCollection } from "../../utils/geoFeature";
-// import * as pin from "../../static/pin.png";
+import { Feature, Point, FeatureCollection } from "geojson";
+import { mapData } from "../../utils/mapCollectionData";
+// import pin from "../../static/pin.png";
 
 @Component({
   components: {
@@ -36,21 +38,31 @@ export default class Map extends Vue {
 
   mapInitialized(map: mapboxgl.Map) {
     this.map = map;
-    // this.map.addImage("pin", pin);
+    // const img = new Image(60, 140);
+    // img.onload = () => this.map && this.map.addImage("pin", img);
+    // img.src = pin;
   }
 
-  fly({ lat, lng }: LocationsEntity) {
-    if (this.map)
-      this.map.flyTo({
-        center: [Number(lng), Number(lat)],
-        zoom: 10,
-        essential: true,
-        pitch: Number(40),
-        bearing: Number(-40),
-      });
+  fly(centroid: Point | null) {
+    if (centroid) {
+      const {
+        coordinates: [lng, lat],
+      } = centroid;
+      if (this.map)
+        this.map.flyTo({
+          center: { lng, lat },
+          zoom: 12,
+          essential: true,
+          pitch: Number(40),
+          bearing: Number(-40),
+        });
+    }
   }
 
-  addPoints(points: LocationsEntity[]) {
+  addPoints(
+    collection: FeatureCollection<Point, any>,
+    property = "population"
+  ) {
     if (this.map) {
       try {
         if (this.map.getSource("points") && this.map.getLayer("pointsLayer")) {
@@ -61,44 +73,79 @@ export default class Map extends Vue {
         console.log(error);
       }
 
+      const col = {
+        ...collection,
+        features: collection.features.map((item) => ({
+          ...item,
+          properties: {
+            ...item.properties,
+            data: new Intl.NumberFormat("en").format(
+              Number(item.properties[property])
+            ),
+          },
+        })),
+      };
       this.map.addSource("points", {
         type: "geojson",
-        data: toGeoFeatureCollection(points),
+        data: col,
       });
       this.map.addLayer({
         id: "pointsLayer",
         type: "symbol",
         source: "points",
         layout: {
-          "icon-image": "marker-15",
-          "text-field": "{title}",
+          // "icon-image": "pin",
+          "text-field": "{name} \n{data}",
           "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
           "text-anchor": "top",
         },
       });
+    }
+  }
 
-      this.map.addSource("points", {
+  fitMap(collection: FeatureCollection<Point, any>) {
+    if (this.map) {
+      const extent = bbox(collection);
+      // Type enforcemnent
+      this.map.fitBounds([extent[0], extent[1], extent[2], extent[3]], {
+        padding: 200,
+      });
+    }
+  }
+
+  extrudeData(
+    collection: FeatureCollection<Point, any>,
+    property = "population"
+  ) {
+    if (this.map) {
+      try {
+        if (this.map.getSource("poly") && this.map.getLayer("extrusion")) {
+          this.map.removeLayer("extrusion");
+          this.map.removeSource("poly");
+        }
+      } catch (error) {
+        console.log(error);
+      }
+
+      const poly = mapData(collection, property);
+      const polyColletions: FeatureCollection | any = {
+        ...collection,
+        features: poly,
+      };
+
+      console.log({ poly, polyColletions });
+      this.map.addSource("poly", {
         type: "geojson",
-        data: toGeoFeatureCollection(points),
+        data: polyColletions,
       });
       this.map.addLayer({
-        id: "room-extrusion",
+        id: "extrusion",
         type: "fill-extrusion",
-        source: "floorplan",
+        source: "poly",
         paint: {
-          // See the Mapbox Style Specification for details on data expressions.
-          // https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions
-
-          // Get the fill-extrusion-color from the source 'color' property.
           "fill-extrusion-color": ["get", "color"],
-
-          // Get fill-extrusion-height from the source 'height' property.
           "fill-extrusion-height": ["get", "height"],
-
-          // Get fill-extrusion-base from the source 'base_height' property.
-          "fill-extrusion-base": ["get", "base_height"],
-
-          // Make extrusions slightly opaque for see through indoor walls.
+          "fill-extrusion-base": ["get", "baseHeight"],
           "fill-extrusion-opacity": 0.5,
         },
       });
@@ -107,10 +154,18 @@ export default class Map extends Vue {
 
   @Watch("points")
   onPointsChanged(value: LocationsEntity[] | null) {
-    console.log("pointssss", value);
     if (value) {
-      this.fly(value[0]);
-      if (value && value.length > 1) this.addPoints(value);
+      const collection: any = featureCollection(
+        value.map((item) => point([Number(item.lng), Number(item.lat)], item))
+      );
+      const centroid = center(collection);
+
+      if (centroid) this.fly(centroid.geometry);
+      if (value && value.length > 1) {
+        this.addPoints(collection);
+        this.extrudeData(collection);
+        this.fitMap(collection);
+      }
     }
   }
 }
