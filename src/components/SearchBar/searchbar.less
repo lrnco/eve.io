@@ -1,0 +1,87 @@
+@import "../global.less";
+
+.search-bar {
+    position: absolute;
+    margin: @search-bar-margin-sd auto;
+    background-color: @background-color;
+    width:~"calc(100% - (@{search-bar-margin-sd} * 2))";
+    border-radius: 12px;
+    height: @search-bar-height-sd;
+    box-shadow: @box-shadow;
+    max-width: 900px;
+    left: 0;
+    right: 0;
+    z-index: 10;
+
+    .search-icon {
+        margin-right: 4px;
+    }
+
+    ::v-deep .ant-form,
+    ::v-deep .ant-row,
+    ::v-deep .ant-col,
+    ::v-deep .ant-form-item-control {
+        height: 100%;
+    }
+
+    ::v-deep .ant-form-item {
+        margin-bottom: 0;
+    }
+
+    .input {
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+
+        ::v-deep .ant-select-selection,
+        ::v-deep ul,
+        ::v-deep .ant-input {
+            height: 100%;
+        }
+
+        ::v-deep .ant-input {
+            border: none;
+            font-size: 20px;
+        }
+
+        ::v-deep .ant-input-affix-wrapper .ant-input:not(:first-child) {
+            padding-left: 42px;
+        }
+    }
+
+
+    ::v-deep .ant-form-explain {
+        position: absolute;
+        top: @search-bar-height-sd - 24px;
+        height: 24px;
+        line-height: 24px;
+        background: @btn-danger-bg;
+        color: #fff;
+        width: 95%;
+        margin: 0 auto;
+        left: 0;
+        right: 0;
+        border-radius: 0 0 8px 8px;
+        transition: top .3s;
+        z-index: 9;
+    }
+
+    ::v-deep .has-error .ant-form-explain {
+        top: @search-bar-height-sd;
+    }
+
+}
+
+.search-detail {
+    p {
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 0;
+        color: @text-color;
+    }
+
+    span {
+        font-size: 12px;
+        color: @text-color-secondary;
+    }
+}
